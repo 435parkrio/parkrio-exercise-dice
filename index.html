@@ -71,4 +71,21 @@ for(let i=0;i<2;i++){
  el.addEventListener('pointermove',e=>{if(!active||rolling)return;state[i].y+=(e.clientX-px)*.65;state[i].x-=(e.clientY-py)*.65;px=e.clientX;py=e.clientY;render(i)});
  el.addEventListener('pointerup',()=>active=false);el.addEventListener('pointercancel',()=>active=false);
 }
-</script></body></html>
+</script><style>
+#resident-walk{position:relative;width:100%;height:150px;overflow:hidden;pointer-events:none;margin-top:0;background:linear-gradient(transparent,#d9edc777)}
+#resident-walk svg{position:absolute;inset:0;width:100%;height:100%}
+</style><div id="resident-walk" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg"></svg></div>
+<script>(()=>{
+const host=document.getElementById('resident-walk'), canvas=host.querySelector('svg'), ns='http://www.w3.org/2000/svg';
+const colors=['#e55d71','#447cc0','#e6a33c','#438c76','#845db3','#ed925b','#536878','#d66da0','#81a94d'];
+const pick=a=>a[Math.floor(Math.random()*a.length)], r=(a,b)=>a+Math.random()*(b-a);
+const people=[]; let next=0; const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function make(x,y,speed,offset){const g=document.createElementNS(ns,'g'), shirt=pick(colors), pants=pick(['#354b64','#635e62','#414b48','#b59672']), skin=pick(['#f2c49e','#e2ae87','#c98963']), age=pick(['child','adult','adult','senior']), size=age==='child'?r(.65,.8):r(.9,1.13), hair=age==='senior'?'#c5c8cb':pick(['#343037','#594137','#242a30']), skirt=Math.random()<.27, hat=Math.random()<.22, bag=Math.random()<.28, cane=age==='senior'&&Math.random()<.3;
+g.innerHTML=`<ellipse cx="0" cy="2" rx="13" ry="3" fill="#60704f" opacity=".19"/><g class="body"><g class="legA"><path d="M-4 -16 L-5 -2" stroke="${pants}" stroke-width="5" stroke-linecap="round"/><path d="M-5 -2 h5" stroke="#343c45" stroke-width="4" stroke-linecap="round"/></g><g class="legB"><path d="M4 -16 L5 -2" stroke="${pants}" stroke-width="5" stroke-linecap="round"/><path d="M5 -2 h5" stroke="#343c45" stroke-width="4" stroke-linecap="round"/></g><g class="armA"><path d="M-6 -30 L-11 -19" stroke="${shirt}" stroke-width="5" stroke-linecap="round"/><circle cx="-11" cy="-17" r="2.6" fill="${skin}"/></g><rect x="-8" y="-34" width="16" height="20" rx="6" fill="${shirt}"/>${skirt?`<path d="M-7 -22 H7 L12 -11 H-12Z" fill="${shirt}"/>`:''}${bag?'<rect x="-12" y="-31" width="7" height="13" rx="3" fill="#a47e52"/>':''}<g class="armB"><path d="M6 -30 L11 -19" stroke="${shirt}" stroke-width="5" stroke-linecap="round"/><circle cx="11" cy="-17" r="2.6" fill="${skin}"/>${cane?'<path d="M11 -17 L15 0" stroke="#84684b" stroke-width="2"/>':''}</g><circle cx="1" cy="-40" r="8" fill="${skin}"/><path d="M-7 -40 Q-9 -53 3 -49 Q11 -49 9 -41 L4 -45 L-6 -43Z" fill="${hair}"/><circle cx="5" cy="-39" r=".9" fill="#493632"/><path d="M4 -35 q3 1 4 -1" stroke="#ad715e" fill="none" stroke-width=".8"/>${hat?'<path d="M-9 -46 Q-6 -55 6 -51 L10 -46 H15 V-44 H-10Z" fill="#d4aa63"/>':''}</g>`;
+canvas.append(g);people.push({g,x,y,speed,offset,size,phase:r(0,6.28),amp:r(4,13),freq:r(.012,.026),body:g.querySelector('.body'),parts:['legA','legB','armA','armB'].map(k=>g.querySelector('.'+k))});}
+function group(x){const n=pick([1,1,2,2,3,3,4,5]), y=r(57,131), speed=r(30,53); for(let i=0;i<n;i++)make(x-i*r(22,32),Math.max(51,Math.min(142,y+r(-16,16))),speed,r(0,5));}
+for(let x=0;x<host.clientWidth+40;x+=r(55,100))group(x);
+let last=0;function frame(t){const dt=Math.min(.05,(t-(last||t))/1000);last=t;const w=host.clientWidth;if(!reduced){next-=dt;if(next<=0){group(-25);next=r(.7,1.5);}}
+for(let i=people.length-1;i>=0;i--){const p=people[i];if(!reduced)p.x+=p.speed*dt;const phase=p.phase+(reduced?0:t*.008), bend=Math.sin(p.x*p.freq+p.offset)*p.amp; p.g.setAttribute('transform',`translate(${p.x} ${p.y+bend}) scale(${p.size})`);p.body.setAttribute('transform',`translate(0 ${-Math.abs(Math.sin(phase))*2}) rotate(${Math.sin(phase)*3} 0 -20)`);p.parts.forEach((el,j)=>el.setAttribute('transform',`rotate(${Math.sin(phase+(j%2)*Math.PI)*(j<2?26:-20)} ${j%2?5:-5} ${j<2?-16:-30})`));if(p.x>w+40){p.g.remove();people.splice(i,1);}}
+if(!reduced)requestAnimationFrame(frame);}requestAnimationFrame(frame);
+})();</script></body></html>
